@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>StudyRoomFinder</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700"
+      rel="stylesheet"
+    />
+    <!--TODO: fix style sheet or find reference to these icons.-->
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <link rel="stylesheet" type="text/css" href="../static/style.css" />
+  </head>
+  <body>
+    <section class="hero is-info is-fullheight">
+      <div class="hero-head">
+        <nav class="navbar">
+          <div class="container">
+            <div class="navbar-brand">
+              <a class="navbar-item" href="/">
+                <!--TODO: Replace with StudyRoomFinder image-->
+                <span class="icon" style="color: orange">
+                  <i class="fa fa-book"></i>
+                </span>
+              </a>
+              <span class="navbar-burger burger" data-target="navbarMenu">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+            </div>
+            <div id="navbarMenu" class="navbar-menu">
+              <!--Right Side of navbar-->
+              <div class="navbar-end">
+                <!--Home Button-->
+                <span class="navbar-item">
+                  <a class="button is-warning is-outlined" href="/">
+                    <span class="icon">
+                      <i class="fa fa-home"></i>
+                    </span>
+                    <span>Home</span>
+                  </a>
+                </span>
+                <!--About Button TODO:Add reference link to about page-->
+                <span class="navbar-item">
+                  <a class="button is-warning is-outlined" href="/about">
+                    <span class="icon">
+                      <i class="fa fa-clipboard"></i>
+                    </span>
+                    <span>About</span>
+                  </a>
+                </span>
+                <!--Github Button-->
+                <span class="navbar-item">
+                  <a class="button is-warning is-outlined" href="#">
+                    <span class="icon">
+                      <i class="fa fa-github"></i>
+                    </span>
+                    <span>View Source</span>
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      <div class="hero-body">
+        <div class="container has-text-centered">
+          <div class="column is-6 is-offset-3">
+            <h1 class="title is-2" style="color: whitesmoke">
+              UVA Study Room Finder
+            </h1>
+            <h2 class="subtitle is-5" style="color: whitesmoke">
+              Find available study rooms across UVA available for reservation
+              today.
+            </h2>
+          </div>
+          <!--TODO: Replace with select instead of dropdown for less JS implementation-->
+          <form action="{{ url_for('show_availability') }}" method="POST">
+            <div class="field">
+              <div class="control">
+                <div class="select">
+                  <select name="location">
+                    <option value="Show All" {% if selected_location == "Show All" %}selected{% endif %}>Show All</option>
+                    <option value="Clark Library" {% if selected_location == "Clark Library" %}selected{% endif %}>Clark Library</option>
+                    <option value="Clemons Library" {% if selected_location == "Clemons Library" %}selected{% endif %}>Clemons Library</option>
+                    <option value="RMC" {% if selected_location == "RMC" %}selected{% endif %}>RMC</option>
+                    <option value="Shannon Library" {% if selected_location == "Shannon Library" %}selected{% endif %}>Shannon Library</option>
+                    <option value="Fine Arts Library" {% if selected_location == "Fine Arts Library" %}selected{% endif %}>Fine Arts Library</option>
+                    <option value="Music Library" {% if selected_location == "Music Library" %}selected{% endif %}>Music Library</option>
+                  </select>
+                </div>
+                <button class="button is-dark" type="submit">Show Availability</button>
+              </div>
+            </div>
+          </form>
+          {% if selected_location %}
+          <h3 style="color: whitesmoke">Selected Location: {{ selected_location }}</h3>
+        {% endif %}
+        </div>
+      </div>
+    </section>
+  </body>
+</html>

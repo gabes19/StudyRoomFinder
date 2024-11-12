@@ -1,0 +1,30 @@
+Folder for the study rooms project.
+Study Room Finder feature:
+-user can see how many time slots and study rooms are available for reservation in total and in each building
+- 12:00AM Check Confirmed bookings to see who has booked already for day.
+
+First get functionality down and then implement web interface using Flask
+
+-Separate clem and mrc? Separate clem floors?
+
+-Plan out front end (web interface). What does it look like? What will it do?
+
+TODO:
+-Fix navbar/check margins
+-Implement show_availability function
+-Base html? for about page
+
+Goal of automating data collection for future analysis and model building:
+
+data_mock.xlsx:
+    -mock of dataset that will be constructed
+    -an available time is a 30 minute time slot in a room
+    -gather all available times across libraries and pct of total across all libs
+    -gather individual library times both raw and as a pct of available rooms in library
+    -plan is to automate data gathering every x minutes (undecided)
+    -json will list the times available in specific rooms
+        -rooms as keys: time slots as values
+    -Add extra data about reservation such as purpose, class group, etc.
+
+TODO:
+- Add urls to each room
