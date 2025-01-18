@@ -102,8 +102,17 @@
               </div>
             </div>
           </form>
-          {% if selected_location %}
+        {% if selected_location %}
           <h3 style="color: whitesmoke">Selected Location: {{ selected_location }}</h3>
+        {% endif %}
+        {% if available_times %}
+        <h2 style = "color: whitesmoke;">Available Times:</h2>
+        <ul>
+            {% for time in available_times %}
+                <li>{{ time }}</li>
+            {% endfor %}
+        
+        </ul>
         {% endif %}
         </div>
       </div>
