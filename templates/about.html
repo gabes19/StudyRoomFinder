@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>About</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <link rel="stylesheet" type="text/css" href="../static/style.css" />
+  </head>
+  <body>
+    <section class="hero is-info is-fullheight">
+      <div class="hero-head">
+        <nav class="navbar">
+          <div class="container">
+            <div class="navbar-brand">
+              <a class="navbar-item" href="https://gabes19.github.io/Personal-Portfolio/">
+                <span class="icon" style="color: orange">
+                  <i class="fa fa-user"></i>
+                </span>
+              </a>
+              <span class="navbar-burger burger" data-target="navbarMenu">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+            </div>
+            <div id="navbarMenu" class="navbar-menu">
+              <!--Right Side of navbar-->
+              <div class="navbar-end">
+                <!--Home Button-->
+                <span class="navbar-item">
+                  <a class="button is-warning is-outlined" href="/">
+                    <span class="icon">
+                      <i class="fa fa-home"></i>
+                    </span>
+                    <span>Home</span>
+                  </a>
+                </span>
+                <!--About Button-->
+                <span class="navbar-item">
+                  <a class="button is-warning is-outlined" href="/about">
+                    <span class="icon">
+                      <i class="fa fa-clipboard"></i>
+                    </span>
+                    <span>About</span>
+                  </a>
+                </span>
+                <!--Github Button-->
+                <span class="navbar-item">
+                  <a class="button is-warning is-outlined" href="https://github.com/gabes19/StudyRoomFinder">
+                    <span class="icon">
+                      <i class="fa fa-github"></i>
+                    </span>
+                    <span>View Source</span>
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      <div class="hero-body">
+        <div class="container has-text-centered">
+          <div class="column is-6 is-offset-3">
+            <h1 class="title is-2" style="color: whitesmoke">
+              About This Project
+            </h1>
+            <h2 class="subtitle is-5" style="color: whitesmoke">
+              Discover the inspiration and purpose behind UVA Study Room Finder.
+            </h2>
+            <p style="color: whitesmoke; margin-top: 1.5em;">
+              UVA Study Room Finder is a personal project aimed at simplifying the process of finding and reserving 
+              study rooms at the University of Virginia. Inspired by the demanding nature of finals season at the University
+              and all the time wasted looking for an isolated spot to sit down and study, UVA Study Room Finder makes the 
+              process of finding your space less frustrating. Choose the library you want to study at and get a list 
+              of all the rooms available for reservation that day.
+            </p>
+            <p style="color: whitesmoke; margin-top: 1em;">
+              Built using Python (Flask) and the Bulma CSS Framework, this project was built as a way 
+              to practice webscraping and fast, streamlined web development. There are plans to automate the webscraping and 
+              create a dataset of room availiability data to explore the supply and demand of study rooms 
+              throughout the day, week, month, and semester. 
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
