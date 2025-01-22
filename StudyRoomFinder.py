@@ -17,13 +17,13 @@ def about():
 @app.route("/clark")
 def clark():
     return render_template('clark.html')
-#TODO:
+#TODO: fix url (maybe session fix, display rooms and times)
 @app.route('/show_availability', methods=['POST'])
 def show_availability():
     location = request.form.get('location')
     available_times = None
     if location == "Clark Library":
         clark = mod.collect_clark()
-        available_times = clark.rooms
+        available_times =[{"name": room, "times": room.available_times} for room in clark.rooms]
     return redirect(url_for('index', selected_location=location, available_times = available_times))
 
