@@ -5,7 +5,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import time, requests
 from Library import Library
-from Room import StudyRoom
+from Room import Room
 
     
 def get_time_slots(url):
