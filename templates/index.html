@@ -106,6 +106,10 @@
           <h3 style="color: whitesmoke">Selected Location: {{ selected_location }}</h3>
         {% endif %}
         {% if available_times %}
+
+        <!-- TODO: ALL YOU NEED IS SELECTED LCOATION, REWORK THIS LOGIC SO AVAILABLE_TIMES
+         IS NOT NECESSARY CONTEXT-->
+
         <h2 style = "color: whitesmoke;">Available Times:</h2>
         <ul>
             {% for time in available_times %}

@@ -4,26 +4,9 @@ from selenium.webdriver.support.ui import Select
 import pandas as pd
 from bs4 import BeautifulSoup
 import time, requests
+from Library import Library
+from Room import StudyRoom
 
-class StudyRoom:
-    def __init__(self,name, library):
-        self.name = name
-        self.library = library
-        available_times = [] #list of available time slots
-        num_times = 0 #number of time slots
-        capacity = ""
-
-class Library:
-    def __init__(self,name):
-        self.name = name
-        self.rooms = [] #list of StudyRooms
-        self.num_rooms = 0 #number of StudyRooms
-
-    def __str__(self):
-        message = self.name + "Clark has the following availability:\n "
-        for room in self.rooms:
-            message += room.name + " Total Available Times: " + room.available_times + "\n"
-        return message
     
 def get_time_slots(url):
   response = requests.get(url)
@@ -46,7 +29,7 @@ def collect_clark():
 
 
     #Create Clark Library object
-    clark = Library('Brown Science & Engineering Library (Clark Hall)')\
+    clark = Library('Brown Science & Engineering Library (Clark Hall)')
 
     #Capacity dict stores study room capacities as keys and form values as values
     capacities = {'Space For 1-4 People': 1,'Space For 5-8 People': 2,'Space For 9-12 People' : 3,'Space For 13+ People' : 4}
@@ -257,6 +240,3 @@ def collect_finearts():
                 location_dropdown = Select(driver.find_element(By.ID, 's-lc-location')).select_by_visible_text('Fine Arts Library')
                 capacity_dropdown = Select(driver.find_element(By.ID, 's-lc-type')).select_by_value(str(value))
                 space_dropdown = Select(driver.find_element(By.ID, 's-lc-space'))
-
-
-

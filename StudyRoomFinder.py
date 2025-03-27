@@ -3,6 +3,7 @@ from flask import Flask, render_template, request,redirect,url_for
 import modules as mod
 app = Flask(__name__)
 
+#TODO: FIX TEMPLATE SO SELECTED_LOCATION IS NOT NECESSARY CONTEXT
 @app.route('/')
 def index():
     selected_location = request.args.get('selected_location')
@@ -17,6 +18,7 @@ def about():
 @app.route("/clark")
 def clark():
     return render_template('clark.html')
+
 #TODO: fix url (maybe session fix, display rooms and times)
 @app.route('/show_availability', methods=['POST'])
 def show_availability():
