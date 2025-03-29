@@ -9,36 +9,48 @@ class Library:
     def __init__(self,name):
         self.name = name
         self.rooms = []  #List of StudyRoom objects in the library 
-    
-    def get_room_data(self,url,capacity):
+    #TODO: Test this: Rework this logic to match room_names and times
+    def get_room_data(self,url,capacity,room_names):
 
 
         response = requests.get(url)
         soup = BeautifulSoup(response.content, 'html.parser')
         rooms = []
-
+        for name in room_names:
+            room = Room(name = name, library = self, capacity = capacity)
+            rooms.append(room)
+        
 
         for label in soup.find_all('div', class_='panel panel-default'):
-            #Extract name of the rooms
+            #Match room names and include available times
             room_name = label.find('h2', class_= 'panel-title').text.strip()
             room_name = room_name.split('\n')[0]
-            #Create Room
-            room = Room(name = room_name,library = self,capacity = capacity)
-            times = label.find_all('div', class_ = 'checkbox')
-            #Add all times for room
-            for time in times:
-                room.available_times.append(time.text.strip())
-
-            rooms.append(room)
+            if room_name in room_names:
+                for room_object in rooms:
+                    if room_object.name == room_name:
+                        times = label.find_all('div', class_ = 'checkbox')
+                        #Add all times for room
+                        for time in times:
+                            room.available_times.append(time.text.strip())
+            #debugging print
             print(room_name)
+            return rooms
             
-
+    #helper function to copy and append List[Webelements] to List[String] to prevent stale items
+    @staticmethod
+    def copy_to_list(we_list,string_list):
+        for i in range(len(we_list)):
+            string_list.append(we_list[i].text)
+        return string_list
     #Function to scrape times from websites for each library
     #TODO: Collect room description
+    #TODO: Test this: Fix rooms logic when no rooms are available
+            #Add from dropdown in first page, then add the times by matching the name
+            #from the next page to the names from the dropdown
     def collect_all_times(self):
         #Set up the Chrome driver with headless option
         options = webdriver.ChromeOptions()
-        options.add_argument('headless')
+        #options.add_argument('headless')
         driver = webdriver.Chrome(options=options)
         #Open the accessible version of the website (easier for scraping)
         driver.get('https://cal.lib.virginia.edu/r/accessible')
@@ -49,15 +61,25 @@ class Library:
         #Scrape the available capacities
         capacity_dropdown = Select(driver.find_element(By.ID, 's-lc-type')).options
         #remove 'select the capacity' option
-        del capacity_dropdown[0]
+        if capacity_dropdown[0] == 'Select the capacity':
+            del capacity_dropdown[0]
+        #create String list to prevent Stale Element Reference
         room_capacities = []
-        #create text list of capacities to prevent Stale Element Reference
-        for i in range(len(capacity_dropdown)):
-            room_capacities.append(capacity_dropdown[i].text)
+        room_capacities = self.copy_to_list(capacity_dropdown, room_capacities)
+        
 
+        
+        room_names = []
         for capacity in room_capacities:
             #Select capacity
             capacity_dropdown = Select(driver.find_element(By.ID, 's-lc-type')).select_by_visible_text(capacity)
+            space_dropdown_list = Select(driver.find_element(By.ID,'s-lc-space')).options
+            #Create String list to prevent Stale Element Reference
+            room_names = []
+            room_names = self.copy_to_list(space_dropdown_list, room_names)
+            if room_names[0] == "Show All":
+                del room_names[0]
+            
             #Select first option (Either 'Show All' or only one room)
             space_dropdown = Select(driver.find_element(By.ID, 's-lc-space')).select_by_index(0)
 
@@ -67,9 +89,8 @@ class Library:
             show_availability.click()
             time.sleep(1)
 
-
             #Collect room names and available times
-            self.rooms = self.get_room_data(driver.current_url, capacity)
+            self.rooms.append(self.get_room_data(driver.current_url, capacity, room_names))
 
             #Go back to form and repopulate library field
             driver.get('https://cal.lib.virginia.edu/r/accessible')
@@ -78,10 +99,10 @@ class Library:
 
 
 def main():
-    clark = Library('Brown Science & Engineering Library (Clark Hall)')
-    clark.collect_all_times()
-
-#main()
+    lib = Library("Fine Arts Library")
+    lib.collect_all_times()
+    print(lib.rooms)
+main()
 
 
 
