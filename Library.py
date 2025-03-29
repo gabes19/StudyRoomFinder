@@ -34,7 +34,7 @@ class Library:
                             room.available_times.append(time.text.strip())
             #debugging print
             print(room_name)
-            return rooms
+        return rooms
             
     #helper function to copy and append List[Webelements] to List[String] to prevent stale items
     @staticmethod
@@ -44,9 +44,6 @@ class Library:
         return string_list
     #Function to scrape times from websites for each library
     #TODO: Collect room description
-    #TODO: Test this: Fix rooms logic when no rooms are available
-            #Add from dropdown in first page, then add the times by matching the name
-            #from the next page to the names from the dropdown
     def collect_all_times(self):
         #Set up the Chrome driver with headless option
         options = webdriver.ChromeOptions()
@@ -90,8 +87,10 @@ class Library:
             time.sleep(1)
 
             #Collect room names and available times
-            self.rooms.append(self.get_room_data(driver.current_url, capacity, room_names))
-
+            rooms_at_this_capacity = self.get_room_data(driver.current_url, capacity, room_names)
+            for room in rooms_at_this_capacity:
+                self.rooms.append(room)
+            
             #Go back to form and repopulate library field
             driver.get('https://cal.lib.virginia.edu/r/accessible')
             location_dropdown = Select(driver.find_element(By.ID, 's-lc-location')).select_by_visible_text(self.name)
@@ -99,9 +98,11 @@ class Library:
 
 
 def main():
-    lib = Library("Fine Arts Library")
+    lib = Library("Shannon Library")
     lib.collect_all_times()
-    print(lib.rooms)
+    for room in lib.rooms: 
+        print(room.name)
+        print(room.available_times)
 main()
 
 
