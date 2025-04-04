@@ -11,7 +11,7 @@ def index():
 @app.route('/about')
 def about():
     return render_template('about.html')
-
+#TODO: Reimplement all the logic
 @app.route('/show_availability', methods=['POST'])
 def show_availability():
     location = request.form.get('location')
