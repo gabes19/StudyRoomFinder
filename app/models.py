@@ -1,3 +1,5 @@
+#TODO: Edit/Create Models using SQLAlchemy 
+
 class Room:
     def __init__(self,name,library,capacity):
         self.name = name
@@ -5,3 +7,4 @@ class Room:
         self.capacity = capacity #String capacity of room
         self.available_times = [] #List[String] of available time slots for the room
         self.description = ""
+

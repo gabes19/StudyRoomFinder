@@ -1,3 +1,5 @@
+#TODO: Refactor this class into a library scraper(shifting to a database model)
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
