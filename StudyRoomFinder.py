@@ -1,5 +1,8 @@
-from flask import Flask, render_template, request,redirect,url_for 
+from flask import Flask, render_template, request,redirect,url_for
+from app.config import Config 
+
 app = Flask(__name__)
+app.config.from_object(Config)
 
 #TODO: FIX TEMPLATE SO SELECTED_LOCATION IS NOT NECESSARY CONTEXT
 @app.route('/')
