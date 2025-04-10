@@ -1,7 +1,6 @@
-# TODO: Edit/Create Models using SQLAlchemy
 import sqlalchemy as sa
-import app
 from sqlalchemy import ForeignKey
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
@@ -10,10 +9,6 @@ from sqlalchemy.orm import (
     declarative_base,
 )
 from datetime import datetime
-
-database_url = app.config.SQL_ALCHEMY_DATABASE_URI
-db = sa.create_engine(database_url)
-Session = sessionmaker(bind=db)
 Base = declarative_base()
 
 
@@ -23,6 +18,7 @@ class Room(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     room_name: Mapped[str] = mapped_column(nullable=False)
     capacity: Mapped[str] = mapped_column(nullable=False)
+    library_id: Mapped[int] = mapped_column(ForeignKey("libraries.id"), nullable=False)
     library: Mapped["Library"] = relationship(back_populates="rooms")
 
 
@@ -30,10 +26,15 @@ class RoomAvailabilitySnapshot(Base):
     __tablename__ = "room_availability_snapshots"
 
     snapshot_id: Mapped[int] = mapped_column(primary_key=True)
+    #Datetime snapshot data was captured
     captured_at: Mapped[datetime] = mapped_column(nullable=False)
     room_id: Mapped[int] = mapped_column(ForeignKey("rooms.id"))
-    available_times: Mapped[list[str]] = mapped_column(nullable=False)
-    num_times: Mapped[int] = mapped_column(nullable=False)
+    #Available times for the day snapshot was captured
+    td_available_times: Mapped[JSON] = mapped_column(JSON,nullable=False)
+    td_num_times: Mapped[int] = mapped_column(nullable=False)
+    #Available times for the day after snapshot was captured (nd = next day)
+    nd_available_times: Mapped[JSON] = mapped_column(JSON,nullable=False)
+    nd_num_times: Mapped[int] = mapped_column(nullable=False)
 
 
 class Library(Base):
