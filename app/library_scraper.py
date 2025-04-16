@@ -1,5 +1,3 @@
-# TODO: Refactor this class into a library scraper(shifting to a database model)
-
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
@@ -9,8 +7,9 @@ import time
 import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, Library, Room
+from models import Base, Library, Room, RoomAvailabilitySnapshot
 from dotenv import load_dotenv
+from datetime import datetime,timedelta
 
 #Set up local env -> FOR AWS LAMBDA, environment variable will be configured via their console
 BASE_DIR = os.path.abspath(os.path.dirname(__file__)) #Path to app folder
@@ -22,36 +21,8 @@ engine = create_engine(DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(bind = engine)
 Base.metadata.create_all(engine)
 
-"""
-    Method to collect all timeslots available for rooms at a specific capacity
-    Parameters:
-        -url: url of page containing room data
-        -capacity: String capacity of rooms to collect data for (taken from capacity dropdown)
-        -room_names: List[String] room names at this library (taken from space dropdown)
-"""
 
-def get_room_data(self, url, capacity, room_names):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, "html.parser")
-    #Create a room object for every room
-    #Each panel label corresponds to a room
-    for panel in soup.find_all("div", class_="panel panel-default"):
-        #Collect room name
-        room_name_elem = panel.find("h2", class_="panel-title")
-        if not room_name_elem:
-            continue
-        room_name_raw = room_name_elem.text.strip()
-        room_name = room_name_raw.split("\n")[0]
-        existing_room = session.query(Room).filter_by(room_name = room_name, lirary_id = existing_lib.id)
-        # Match room name in panel to room_name list and include available times
-    #     if room_name in room_names:
-    #         for room_object in rooms:
-    #             if room_object.name == room_name:
-    #                 times = label.find_all("div", class_="checkbox")
-    #                 # Add all times for room
-    #                 for time in times:
-    #                     room.available_times.append(time.text.strip())
-    # return rooms
+one_minute_ago = datetime.now() - timedelta(minutes=1)
 
 """
     Helper method to copy and append List[WebelElement]
@@ -108,6 +79,14 @@ def run_scraper(library_name: str):
                 room_names = copy_to_list(space_dropdown_list, room_names)
                 if room_names[0] == "Show All":
                     del room_names[0]
+                for name in room_names:
+                    existing_room = session.query(Room).filter_by(room_name = name, library_id = existing_lib.id).first()
+                    if not existing_room:
+                        existing_room = Room(room_name = name, capacity = capacity, library_id = existing_lib.id)
+                        session.add(existing_room)
+                        session.commit()
+                        existing_lib.num_rooms +=1
+                        session.commit()
                 # Select first option (Either 'Show All' or only one room)
                 space_dropdown = Select(driver.find_element(By.ID, "s-lc-space")).select_by_index(0)
                 # Show Availability button
@@ -117,22 +96,36 @@ def run_scraper(library_name: str):
                 url = driver.current_url
                 response = requests.get(url)
                 soup = BeautifulSoup(response.content, "html.parser")
-                #Create a room object for every room
                 #Each panel label corresponds to a room
                 for panel in soup.find_all("div", class_="panel panel-default"):
-                    #Collect room name
-                    room_name_elem = panel.find("h2", class_="panel-title")
-                    if not room_name_elem:
-                        continue
-                    room_name_raw = room_name_elem.text.strip()
-                    room_name = room_name_raw.split("\n")[0]
-                    existing_room = session.query(Room).filter_by(room_name = room_name, library_id = existing_lib.id).first()
-                    if not existing_room:
-                        existing_room = Room(room_name = room_name, capacity = capacity, library_id = existing_lib.id)
-                        session.add(existing_room)
-                        session.commit()
-                        existing_lib.num_rooms +=1
-                        session.commit()
+                    # #Room data
+                    # room_name_elem = panel.find("h2", class_="panel-title")
+                    # if not room_name_elem:
+                    #     continue
+                    # room_name_raw = room_name_elem.text.strip()
+                    # room_name = room_name_raw.split("\n")[0]
+                    # existing_room = session.query(Room).filter_by(room_name = room_name, library_id = existing_lib.id).first()
+                    # if not existing_room:
+                    #     existing_room = Room(room_name = room_name, capacity = capacity, library_id = existing_lib.id)
+                    #     session.add(existing_room)
+                    #     session.commit()
+                    #     existing_lib.num_rooms +=1
+                    #     session.commit()
+                        #Room availability snapshots
+                        time_elements = panel.find_all("div", class_="checkbox")
+                        available_times = []
+                        for time_element in time_elements:
+                            time_text = time_element.text.strip()
+                            available_times.append(time_text)
+                        existing_snapshot = session.query(RoomAvailabilitySnapshot).filter(RoomAvailabilitySnapshot.room_id == existing_room.id).filter(
+                            RoomAvailabilitySnapshot.captured_at >= one_minute_ago).first()
+                        if not existing_snapshot:
+                            #TODO: add scraping for next day
+                            new_snapshot = RoomAvailabilitySnapshot(room_id = existing_room.id, library_id = existing_lib.id, captured_at = datetime.now(),
+                                                                          td_available_times = available_times, td_num_times = len(available_times),
+                                                                            nd_available_times = [], nd_num_times = 0)
+                            session.add(new_snapshot)
+                            session.commit()
                 # Go back to form and repopulate library field
                 driver.get("https://cal.lib.virginia.edu/r/accessible")
                 location_dropdown = Select(driver.find_element(By.ID, "s-lc-location")).select_by_visible_text(library_name)
@@ -143,5 +136,4 @@ def run_scraper(library_name: str):
 
 def main():
     run_scraper("Shannon Library")
-
 main()

@@ -3,7 +3,7 @@ from config import Config
 
 app = Flask(__name__)
 app.config.from_object(Config)
-#TODO: FIX TEMPLATE SO SELECTED_LOCATION IS NOT NECESSARY CONTEXT
+
 @app.route('/')
 def index():
     selected_location = request.args.get('selected_location')
@@ -16,10 +16,5 @@ def about():
 #TODO: Reimplement all the logic
 @app.route('/show_availability', methods=['POST'])
 def show_availability():
-    location = request.form.get('location')
-    available_times = None
-    if location == "Clark Library":
-        clark = mod.collect_clark()
-        available_times =[{"name": room, "times": room.available_times} for room in clark.rooms]
-    return redirect(url_for('index', selected_location=location, available_times = available_times))
+    pass
 
