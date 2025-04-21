@@ -47,7 +47,7 @@ def copy_to_list(we_list, string_list):
         -capacity: Capacity of rooms being scraped
 
 '''
-def collect_availability(driver: webdriver, session, library: Library, capacity: str):
+def collect_availability(driver: webdriver, session, library: Library, capacity: str, next_day: bool):
     url = driver.current_url
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
@@ -72,14 +72,17 @@ def collect_availability(driver: webdriver, session, library: Library, capacity:
             for time_element in time_elements:
                 time_text = time_element.text.strip()
                 available_times.append(time_text)
-            #TODO: Alter logic to allow next day data collection
             existing_snapshot = session.query(RoomAvailabilitySnapshot).filter(RoomAvailabilitySnapshot.room_id == existing_room.id).filter(
                 RoomAvailabilitySnapshot.captured_at >= one_minute_ago).first()
-            if not existing_snapshot:
+            if not existing_snapshot and not next_day:
                 new_snapshot = RoomAvailabilitySnapshot(room_id = existing_room.id, library_id = library.id, captured_at = datetime.now(),
                                                                 td_available_times = available_times, td_num_times = len(available_times),
                                                                 nd_available_times = [], nd_num_times = 0)
                 session.add(new_snapshot)
+                session.commit()
+            elif existing_snapshot and next_day:
+                existing_snapshot.nd_available_times = available_times
+                existing_snapshot.nd_num_times = len(available_times)
                 session.commit()
 
 """
@@ -113,7 +116,7 @@ def run_scraper(library_name: str):
                 del capacity_dropdown[0]
             # Create String list to prevent Stale Element Reference
             room_capacities = []
-            room_capacities = copy_to_list(capacity_dropdown, room_capacities)
+            room_capacities = copy_to_list(we_list=capacity_dropdown, string_list=room_capacities)
             for capacity in room_capacities:
                 # Select capacity
                 capacity_dropdown = Select(driver.find_element(By.ID, "s-lc-type")).select_by_visible_text(capacity)
@@ -137,39 +140,14 @@ def run_scraper(library_name: str):
                 show_availability = driver.find_element(By.ID, "s-lc-go")
                 show_availability.click()
                 time.sleep(1)
-                url = driver.current_url
-                response = requests.get(url)
-                soup = BeautifulSoup(response.content, "html.parser")
-                #Each panel label corresponds to a room
-                for panel in soup.find_all("div", class_="panel panel-default"):
-                    #Room data
-                    room_name_elem = panel.find("h2", class_="panel-title")
-                    if not room_name_elem:
-                        continue
-                    room_name_raw = room_name_elem.text.strip()
-                    room_name = room_name_raw.split("\n")[0]
-                    existing_room = session.query(Room).filter_by(room_name = room_name, library_id = existing_lib.id).first()
-                    if not existing_room:
-                        existing_room = Room(room_name = room_name, capacity = capacity, library_id = existing_lib.id)
-                        session.add(existing_room)
-                        session.commit()
-                        existing_lib.num_rooms +=1
-                        session.commit()
-                        #Room availability snapshots
-                        time_elements = panel.find_all("div", class_="checkbox")
-                        available_times = []
-                        for time_element in time_elements:
-                            time_text = time_element.text.strip()
-                            available_times.append(time_text)
-                        existing_snapshot = session.query(RoomAvailabilitySnapshot).filter(RoomAvailabilitySnapshot.room_id == existing_room.id).filter(
-                            RoomAvailabilitySnapshot.captured_at >= one_minute_ago).first()
-                        if not existing_snapshot:
-                            #TODO: add scraping for next day
-                            new_snapshot = RoomAvailabilitySnapshot(room_id = existing_room.id, library_id = existing_lib.id, captured_at = datetime.now(),
-                                                                          td_available_times = available_times, td_num_times = len(available_times),
-                                                                            nd_available_times = [], nd_num_times = 0)
-                            session.add(new_snapshot)
-                            session.commit()
+                #Collect today's data
+                collect_availability(driver=driver, session=session, library=existing_lib, capacity=capacity, next_day=False)
+                #Collect tomorrow's data
+                #Currently assuming second dropdown option is the next day (possible future rework)
+                date_dropdown = Select(driver.find_element(By.ID, "date")).select_by_index(1)
+                show_availability = driver.find_element(By.ID, "s-lc-submit-filters")
+                show_availability.click()
+                collect_availability(driver=driver, session=session, library=existing_lib, capacity=capacity, next_day=True)
                 # Go back to form and repopulate library field
                 driver.get("https://cal.lib.virginia.edu/r/accessible")
                 location_dropdown = Select(driver.find_element(By.ID, "s-lc-location")).select_by_visible_text(library_name)
