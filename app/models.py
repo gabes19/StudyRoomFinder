@@ -20,7 +20,7 @@ class Room(Base):
 class RoomAvailabilitySnapshot(Base):
     __tablename__ = "room_availability_snapshots"
 
-    snapshot_id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     #Datetime snapshot data was captured
     captured_at: Mapped[datetime] = mapped_column(nullable=False)
     room_id: Mapped[int] = mapped_column(ForeignKey("rooms.id"))
@@ -40,3 +40,14 @@ class Library(Base):
     library_name: Mapped[str] = mapped_column(nullable=False)
     num_rooms: Mapped[int] = mapped_column(nullable=False)
     rooms: Mapped[List["Room"]] = relationship(back_populates="library")
+
+class RoomAvailabilityChange(Base):
+    __tablename__ = "room_availability_changes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    timestamp: Mapped[datetime] = mapped_column(nullable=False)
+    room_id: Mapped[int] = mapped_column(ForeignKey("rooms.id"))
+    prev_snapshot_id: Mapped[int] = mapped_column(ForeignKey("room_availability_snapshots.id"))
+    this_snapshot_id: Mapped[int] = mapped_column(ForeignKey("room_availability_snapshots.id"))
+    td_diff: Mapped[int] = mapped_column(nullable=False)
+    nd_diff: Mapped[int] = mapped_column(nullable=False)

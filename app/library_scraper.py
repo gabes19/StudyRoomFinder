@@ -32,21 +32,19 @@ one_minute_ago = datetime.now() - timedelta(minutes=1)
         -string_list: Existing List[String] to which WebElement text will be appended to
 """
 
-
 def copy_to_list(we_list, string_list):
     for element in we_list:
         string_list.append(element.text)
     return string_list
 
-'''
+"""
     Helper method to scrape data availability from url and add to database. 
     Parameters:
         -driver: Selenium Web Driver
         -session: Current SQLALchemy Session
         -Library: Library collecting data for
         -capacity: Capacity of rooms being scraped
-
-'''
+"""
 def collect_availability(driver: webdriver, session, library: Library, capacity: str, next_day: bool):
     url = driver.current_url
     response = requests.get(url)
@@ -114,7 +112,6 @@ def collect_availability(driver: webdriver, session, library: Library, capacity:
 """
     Function to run scraper and collect data for all libraries.
 """
-
 def run_scraper(library_name: str):
     session = SessionLocal()
     try:
@@ -180,6 +177,13 @@ def run_scraper(library_name: str):
     finally:
         session.close()
 
+"""
+    Function to calculate differences between room_availability_snapshots
+"""
+def calculate_differences():
+    pass
+
 def main():
+
     run_scraper("Shannon Library")
 main()
