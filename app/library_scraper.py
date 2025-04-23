@@ -48,7 +48,7 @@ def collect_locations():
     try:
         #Comment out headless option for local dev
         options = webdriver.ChromeOptions()
-        #options.add_argument('headless')
+        options.add_argument('headless')
         driver = webdriver.Chrome(options=options)
         try:
             driver.get("https://cal.lib.virginia.edu/r/accessible")
@@ -146,10 +146,10 @@ def collect_availability(driver: webdriver, session, library: Library, capacity:
                 
 """
     Function to run scraper and collect data for all libraries.
-    -location_list: list of library names
+    -location_list: list[str] of library names
 """
 
-def run_scraper(location_list):
+def run_scraper(location_list: list[str]):
     session = SessionLocal()
     try:
         #TODO rework logic
@@ -281,34 +281,37 @@ def collect_recent_availability_changes():
 
 """
     Function to aggregate most recent availability changes from Room level -> Library Level
+    -location_list: List[str] of library names
 """
 
-def aggregate_availability_changes(library_id: int):
+def aggregate_availability_changes(location_list: list[str]):
     session = SessionLocal()
     try:
-        #Query list of room ids belonging to the library
-        room_ids = [r[0] for r in session.query(Room.id.distinct()).filter_by(library_id = library_id).all()]
-        #Query most recent availability change calculation for each room, filtering in only room_ids from the list
-        availability_changes = (session.query(RoomAvailabilityChange).filter(RoomAvailabilityChange.room_id.in_(room_ids))
-                                .order_by(RoomAvailabilityChange.timestamp.desc()).limit(1).all())
-        agg_td_diff = 0
-        agg_nd_diff = 0
-        td_num_reserved = 0
-        td_num_released = 0
-        nd_num_reserved = 0
-        nd_num_released = 0
-        for ac in availability_changes:
-            agg_td_diff += ac.td_diff
-            agg_nd_diff += ac.nd_diff
-            td_num_reserved += len(ac.td_reserved) 
-            td_num_released += len(ac.td_released)
-            nd_num_reserved += len(ac.nd_reserved) 
-            nd_num_released += len(ac.nd_released)
-        aggregate_changes = (AggregateChanges(library_id = library_id, timestamp = datetime.now(), agg_td_diff = agg_td_diff, 
-                                              agg_nd_diff = agg_nd_diff, td_num_reserved = td_num_reserved, td_num_released = td_num_released,
-                                              nd_num_reserved = nd_num_reserved, nd_num_released = nd_num_released))
-        session.add(aggregate_changes)
-        session.commit()
+        for location in location_list:
+            library = session.query(Library).filter_by(library_name = location).first()
+            #Query list of room ids belonging to the library
+            room_ids = [r[0] for r in session.query(Room.id.distinct()).filter_by(library_id = library.id).all()]
+            #Query most recent availability change calculation for each room, filtering in only room_ids from the list
+            availability_changes = (session.query(RoomAvailabilityChange).filter(RoomAvailabilityChange.room_id.in_(room_ids))
+                                    .order_by(RoomAvailabilityChange.timestamp.desc()).limit(1).all())
+            agg_td_diff = 0
+            agg_nd_diff = 0
+            td_num_reserved = 0
+            td_num_released = 0
+            nd_num_reserved = 0
+            nd_num_released = 0
+            for ac in availability_changes:
+                agg_td_diff += ac.td_diff
+                agg_nd_diff += ac.nd_diff
+                td_num_reserved += len(ac.td_reserved) 
+                td_num_released += len(ac.td_released)
+                nd_num_reserved += len(ac.nd_reserved) 
+                nd_num_released += len(ac.nd_released)
+            aggregate_changes = (AggregateChanges(library_id = library.id, timestamp = datetime.now(), agg_td_diff = agg_td_diff, 
+                                                agg_nd_diff = agg_nd_diff, td_num_reserved = td_num_reserved, td_num_released = td_num_released,
+                                                nd_num_reserved = nd_num_reserved, nd_num_released = nd_num_released))
+            session.add(aggregate_changes)
+            session.commit()
     finally:
         session.close()
 
@@ -318,5 +321,5 @@ def main():
     locations = collect_locations()
     run_scraper(locations)
     collect_recent_availability_changes()
-    aggregate_availability_changes(1)
+    aggregate_availability_changes(locations)
 main()
