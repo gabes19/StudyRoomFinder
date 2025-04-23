@@ -182,7 +182,7 @@ def run_scraper(library_name: str):
     Does not add to the database
     Used in collect_all_recent_differences
 """
-
+#TODO:Ensure filter future times function is working as intended
 def calculate_snapshot_difference(prev_snapshot: RoomAvailabilitySnapshot, current_snapshot: RoomAvailabilitySnapshot, session):
     try:
         #Filter out expired time slots

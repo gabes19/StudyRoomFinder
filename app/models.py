@@ -55,3 +55,5 @@ class RoomAvailabilityChange(Base):
     td_released: Mapped[List[str]] = mapped_column(JSON,nullable=False)
     nd_reserved: Mapped[List[str]] = mapped_column(JSON,nullable=False)
     nd_released: Mapped[List[str]] = mapped_column(JSON,nullable=False)
+
+#TODO:create aggregate changes table
