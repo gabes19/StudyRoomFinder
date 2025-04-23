@@ -178,13 +178,14 @@ def run_scraper(library_name: str):
         session.close()
 
 """
-    Function to calculate differences between room_availability_snapshots
+    Function to calculate differences between any two room_availability_snapshots.
+    Does not add to the database
+    Used in collect_all_recent_differences
 """
 
-
-def calculate_snapshot_difference(prev_snapshot: RoomAvailabilitySnapshot, current_snapshot: RoomAvailabilitySnapshot):
+#TODO: Do not
+def calculate_snapshot_difference(prev_snapshot: RoomAvailabilitySnapshot, current_snapshot: RoomAvailabilitySnapshot, session):
     try:
-        session = SessionLocal()
         #Filter out expired time slots
         current_snapshot_time = current_snapshot.captured_at
         def filter_future_times(times,current_snapshot_time):
@@ -211,25 +212,39 @@ def calculate_snapshot_difference(prev_snapshot: RoomAvailabilitySnapshot, curre
         nd_reserved = sorted(list(nd_prev_times - nd_curr_times))
         nd_released = sorted(list(nd_curr_times - nd_prev_times))
         nd_diff = len(nd_curr_times - nd_prev_times)
-        room_availability_change = RoomAvailabilityChange(timestamp = datetime.now(), room_id = prev_snapshot.room_id, 
+        room_availability_change = RoomAvailabilityChange(timestamp = datetime.now(), room_id = current_snapshot.room_id, 
                                     prev_snapshot_id = prev_snapshot.snapshot_id, current_snapshot_id = current_snapshot.snapshot_id,
                                     td_diff = td_diff, nd_diff = nd_diff, td_reserved = td_reserved, td_released = td_released,
                                     nd_reserved = nd_reserved, nd_released = nd_released)
-        session.add(room_availability_change)
-        session.commit()
+        return room_availability_change
+    except Exception as e:
+        print(f"Error in calculating snapshot difference - {e}")
+
+"""
+    Function to calculate differences between the two most recent snapshots of the same rooms
+"""
+
+def collect_all_recent_differences():
+    session = SessionLocal()
+    try:
+        room_ids = session.query(Room).distinct()
+        #For every two most recent snapshots of each distinct room id 
+        #calculate_snapshot_difference(prev_snapshot, current_snapshot)
+        for id in room_ids:
+            #Second to last snapshot
+            prev_snapshot = session.query(RoomAvailabilitySnapshot).filter_by(room_id = id).order_by(RoomAvailabilitySnapshot.captured_at.desc())[1]
+            #Last snapshot
+            current_snapshot = session.query(RoomAvailabilitySnapshot).filter_by(room_id = id).order_by(RoomAvailabilitySnapshot.captured_at.desc())[0]
+            snapshot_difference = calculate_snapshot_difference(prev_snapshot = prev_snapshot, current_snapshot = current_snapshot)
+            session.add(snapshot_difference)
+            session.commit()
     finally:
         session.close()
-
+#TODO: Function to aggregate changes
+def aggregate_snapshot_changes():
+    pass
 
 
 def main():
     run_scraper("Shannon Library")
-    session = SessionLocal()
-    #Second to last snapshot
-    prev_snapshot = session.query(RoomAvailabilitySnapshot).order_by(RoomAvailabilitySnapshot.captured_at)[1]
-    #Last snapshot
-    current_snapshot = session.query(RoomAvailabilitySnapshot).order_by(RoomAvailabilitySnapshot.captured_at)[0]
-    session.close()
-    calculate_snapshot_difference(prev_snapshot = prev_snapshot, current_snapshot = current_snapshot)
-
 main()
