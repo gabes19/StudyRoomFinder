@@ -20,7 +20,7 @@ class Room(Base):
 class RoomAvailabilitySnapshot(Base):
     __tablename__ = "room_availability_snapshots"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    snapshot_id: Mapped[int] = mapped_column(primary_key=True)
     #Datetime snapshot data was captured
     captured_at: Mapped[datetime] = mapped_column(nullable=False)
     room_id: Mapped[int] = mapped_column(ForeignKey("rooms.id"))
@@ -47,7 +47,7 @@ class RoomAvailabilityChange(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     timestamp: Mapped[datetime] = mapped_column(nullable=False)
     room_id: Mapped[int] = mapped_column(ForeignKey("rooms.id"))
-    prev_snapshot_id: Mapped[int] = mapped_column(ForeignKey("room_availability_snapshots.id"))
-    this_snapshot_id: Mapped[int] = mapped_column(ForeignKey("room_availability_snapshots.id"))
+    prev_snapshot_id: Mapped[int] = mapped_column(ForeignKey("room_availability_snapshots.snapshot_id"))
+    this_snapshot_id: Mapped[int] = mapped_column(ForeignKey("room_availability_snapshots.snapshot_id"))
     td_diff: Mapped[int] = mapped_column(nullable=False)
     nd_diff: Mapped[int] = mapped_column(nullable=False)

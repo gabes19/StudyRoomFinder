@@ -180,6 +180,8 @@ def run_scraper(library_name: str):
 """
     Function to calculate differences between room_availability_snapshots
 """
+
+#TODO: Write this function and check when rooms become unavailable for reservation due to time constraints
 def calculate_differences():
     pass
 
