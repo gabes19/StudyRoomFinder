@@ -17,7 +17,7 @@ load_dotenv(os.path.join(BASE_DIR, '..', '.env'), override=True) #Load .env (one
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(bind = engine)
 Base.metadata.create_all(engine)
 
@@ -186,27 +186,36 @@ def calculate_snapshot_difference(prev_snapshot: RoomAvailabilitySnapshot, curre
     try:
         session = SessionLocal()
         #Filter out expired time slots
-        now_str = current_snapshot.captured_at
-        def filter_future_times(times):
-            return [t for t in times if t.split("-")[0] > now_str]
-        td_prev_times = set(filter_future_times(prev_snapshot.td_available_times))
-        td_curr_times = set(filter_future_times(current_snapshot.td_available_times))
+        current_snapshot_time = current_snapshot.captured_at
+        def filter_future_times(times,current_snapshot_time):
+            future_times = []
+            for t in times:
+                try:
+                    prev_start_str = t.split("-")[0].strip()
+                    prev_start_time = datetime.strptime(prev_start_str,"%I:%M%p")
+                    if prev_start_time > current_snapshot_time:
+                        future_times.append()
+                except Exception as e:
+                    print(f"Error occured in time formatting - {e}")
+            return future_times
+        td_prev_times = set(filter_future_times(prev_snapshot.td_available_times, current_snapshot_time))
+        td_curr_times = set(filter_future_times(current_snapshot.td_available_times, current_snapshot_time))
         #Times that were available but no longer are
         td_reserved = sorted(list(td_prev_times - td_curr_times))
         #Times that were reserved and now are available
         td_released = sorted(list(td_curr_times - td_prev_times))
         td_diff = len(td_curr_times - td_prev_times)\
         #Same thing for next day times
-        nd_prev_times = set(filter_future_times(prev_snapshot.nd_available_times))
-        nd_curr_times = set(filter_future_times(current_snapshot.nd_available_times))
+        nd_prev_times = set(filter_future_times(prev_snapshot.nd_available_times, current_snapshot_time))
+        nd_curr_times = set(filter_future_times(current_snapshot.nd_available_times, current_snapshot_time))
         nd_reserved = sorted(list(nd_prev_times - nd_curr_times))
         nd_released = sorted(list(nd_curr_times - nd_prev_times))
         nd_diff = len(nd_curr_times - nd_prev_times)
         room_availability_change = RoomAvailabilityChange(timestamp = datetime.now(), room_id = prev_snapshot.room_id, 
-                                    prev_snapshot_id = prev_snapshot.id, current_snapshot_id = current_snapshot.id,
+                                    prev_snapshot_id = prev_snapshot.snapshot_id, current_snapshot_id = current_snapshot.snapshot_id,
                                     td_diff = td_diff, nd_diff = nd_diff, td_reserved = td_reserved, td_released = td_released,
                                     nd_reserved = nd_reserved, nd_released = nd_released)
-        session.add(RoomAvailabilityChange)
+        session.add(room_availability_change)
         session.commit()
     finally:
         session.close()
@@ -215,4 +224,12 @@ def calculate_snapshot_difference(prev_snapshot: RoomAvailabilitySnapshot, curre
 
 def main():
     run_scraper("Shannon Library")
+    session = SessionLocal()
+    #Second to last snapshot
+    prev_snapshot = session.query(RoomAvailabilitySnapshot).order_by(RoomAvailabilitySnapshot.captured_at)[1]
+    #Last snapshot
+    current_snapshot = session.query(RoomAvailabilitySnapshot).order_by(RoomAvailabilitySnapshot.captured_at)[0]
+    session.close()
+    calculate_snapshot_difference(prev_snapshot = prev_snapshot, current_snapshot = current_snapshot)
+
 main()
