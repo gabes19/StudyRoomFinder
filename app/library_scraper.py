@@ -42,7 +42,7 @@ def copy_to_list(we_list, string_list):
     Will help populate dropdown in the frontend of the app 
     as well as provide a list of locations for the scraper
 """
-#TODO: collect from page and populate locations (in library table)
+
 def collect_locations():
     session = SessionLocal()
     try:
@@ -53,12 +53,23 @@ def collect_locations():
         try:
             driver.get("https://cal.lib.virginia.edu/r/accessible")
             location_options = location_dropdown = Select(driver.find_element(By.ID, "s-lc-location")).options
-
+            if location_options[0].text == "Select a Location":
+                del location_options[0]
+            #copy to string list to prevent Stale Element Reference
+            location_list = []
+            location_list = copy_to_list(location_options, location_list)
+            for location in location_list:
+                #Check if library row exists
+                existing_lib = (session.query(Library).filter_by(library_name=location).first())
+                if not existing_lib:
+                    existing_lib = Library(library_name =location, num_rooms =0, rooms = [])
+                    session.add(existing_lib)
+                    session.commit()
+            return location_list    
         finally:
             driver.quit()
     finally:
         session.close()
-    pass
 
 
 """
@@ -135,68 +146,66 @@ def collect_availability(driver: webdriver, session, library: Library, capacity:
                 
 """
     Function to run scraper and collect data for all libraries.
+    -location_list: list of library names
 """
 
-def run_scraper(library_name: str):
+def run_scraper(location_list):
     session = SessionLocal()
     try:
-        #Check if library row exists
-        existing_lib = (session.query(Library).filter_by(library_name=library_name).first())
-        if not existing_lib:
-            existing_lib = Library(library_name =library_name, num_rooms =0, rooms = [])
-            session.add(existing_lib)
-            session.commit()
+        #TODO rework logic
         #Comment out headless option for local dev
         options = webdriver.ChromeOptions()
         #options.add_argument('headless')
         driver = webdriver.Chrome(options=options)
         try:
-            #Open the accessible version of the website (easier for scraping)
-            driver.get("https://cal.lib.virginia.edu/r/accessible")
-            #Select the library from the dropdown menu
-            location_dropdown = Select(driver.find_element(By.ID, "s-lc-location")).select_by_visible_text(library_name)
-            #Scrape the available capacities
-            capacity_dropdown = Select(driver.find_element(By.ID, "s-lc-type")).options
-            #Remove 'select the capacity' option
-            if capacity_dropdown[0].text == "Select the capacity":
-                del capacity_dropdown[0]
-            #Create String list to prevent Stale Element Reference
-            room_capacities = []
-            room_capacities = copy_to_list(capacity_dropdown, room_capacities)
-            for capacity in room_capacities:
-                #Select capacity
-                capacity_dropdown = Select(driver.find_element(By.ID, "s-lc-type")).select_by_visible_text(capacity)
-                #Create String list to prevent Stale Element Reference
-                space_dropdown_list = Select(driver.find_element(By.ID, "s-lc-space")).options
-                room_names = []
-                room_names = copy_to_list(space_dropdown_list, room_names)
-                if room_names[0] == "Show All":
-                    del room_names[0]
-                for name in room_names:
-                    existing_room = session.query(Room).filter_by(room_name = name, library_id = existing_lib.id).first()
-                    if not existing_room:
-                        existing_room = Room(room_name = name, capacity = capacity, library_id = existing_lib.id)
-                        session.add(existing_room)
-                        session.commit()
-                        existing_lib.num_rooms +=1
-                        session.commit()
-                #Select first option (Either 'Show All' or only one room)
-                space_dropdown = Select(driver.find_element(By.ID, "s-lc-space")).select_by_index(0)
-                #Show Availability button
-                show_availability = driver.find_element(By.ID, "s-lc-go")
-                show_availability.click()
-                time.sleep(1)
-                #Collect today's data
-                collect_availability(driver=driver, session=session, library=existing_lib, capacity=capacity, next_day=False)
-                #Collect tomorrow's data
-                #Currently assuming second dropdown option is the next day (possible future rework)
-                date_dropdown = Select(driver.find_element(By.ID, "date")).select_by_index(1)
-                show_availability = driver.find_element(By.ID, "s-lc-submit-filters")
-                show_availability.click()
-                collect_availability(driver=driver, session=session, library=existing_lib, capacity=capacity, next_day=True)
-                # Go back to form and repopulate library field
+            for location in location_list:
+                library = session.query(Library).filter_by(library_name = location).first()
+                #Open the accessible version of the website (easier for scraping)
                 driver.get("https://cal.lib.virginia.edu/r/accessible")
-                location_dropdown = Select(driver.find_element(By.ID, "s-lc-location")).select_by_visible_text(library_name)
+                #Select the library from the dropdown menu
+                location_dropdown = Select(driver.find_element(By.ID, "s-lc-location")).select_by_visible_text(library.library_name)
+                #Scrape the available capacities
+                capacity_dropdown = Select(driver.find_element(By.ID, "s-lc-type")).options
+                #Remove 'select the capacity' option
+                if capacity_dropdown[0].text == "Select the capacity":
+                    del capacity_dropdown[0]
+                #Create String list to prevent Stale Element Reference
+                room_capacities = []
+                room_capacities = copy_to_list(capacity_dropdown, room_capacities)
+                for capacity in room_capacities:
+                    #Select capacity
+                    capacity_dropdown = Select(driver.find_element(By.ID, "s-lc-type")).select_by_visible_text(capacity)
+                    #Create String list to prevent Stale Element Reference
+                    space_dropdown_list = Select(driver.find_element(By.ID, "s-lc-space")).options
+                    room_names = []
+                    room_names = copy_to_list(space_dropdown_list, room_names)
+                    if room_names[0] == "Show All":
+                        del room_names[0]
+                    for name in room_names:
+                        existing_room = session.query(Room).filter_by(room_name = name, library_id = library.id).first()
+                        if not existing_room:
+                            existing_room = Room(room_name = name, capacity = capacity, library_id = library.id)
+                            session.add(existing_room)
+                            session.commit()
+                            library.num_rooms +=1
+                            session.commit()
+                    #Select first option (Either 'Show All' or only one room)
+                    space_dropdown = Select(driver.find_element(By.ID, "s-lc-space")).select_by_index(0)
+                    #Show Availability button
+                    show_availability = driver.find_element(By.ID, "s-lc-go")
+                    show_availability.click()
+                    time.sleep(1)
+                    #Collect today's data
+                    collect_availability(driver=driver, session=session, library=library, capacity=capacity, next_day=False)
+                    #Collect tomorrow's data
+                    #Currently assuming second dropdown option is the next day (possible future rework)
+                    date_dropdown = Select(driver.find_element(By.ID, "date")).select_by_index(1)
+                    show_availability = driver.find_element(By.ID, "s-lc-submit-filters")
+                    show_availability.click()
+                    collect_availability(driver=driver, session=session, library=library, capacity=capacity, next_day=True)
+                    # Go back to form and repopulate library field
+                    driver.get("https://cal.lib.virginia.edu/r/accessible")
+                    location_dropdown = Select(driver.find_element(By.ID, "s-lc-location")).select_by_visible_text(library.library_name)
         finally:
             driver.quit()
     finally:
@@ -306,7 +315,8 @@ def aggregate_availability_changes(library_id: int):
 
 
 def main():
-    run_scraper("Shannon Library")
+    locations = collect_locations()
+    run_scraper(locations)
     collect_recent_availability_changes()
     aggregate_availability_changes(1)
 main()
