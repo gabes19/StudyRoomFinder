@@ -7,7 +7,7 @@ import time
 import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, Library, Room, RoomAvailabilitySnapshot
+from models import Base, Library, Room, RoomAvailabilitySnapshot, RoomAvailabilityChange
 from dotenv import load_dotenv
 from datetime import datetime,timedelta
 
@@ -181,11 +181,38 @@ def run_scraper(library_name: str):
     Function to calculate differences between room_availability_snapshots
 """
 
-#TODO: Write this function and check when rooms become unavailable for reservation due to time constraints
-def calculate_differences():
-    pass
+
+def calculate_snapshot_difference(prev_snapshot: RoomAvailabilitySnapshot, current_snapshot: RoomAvailabilitySnapshot):
+    try:
+        session = SessionLocal()
+        #Filter out expired time slots
+        now_str = current_snapshot.captured_at
+        def filter_future_times(times):
+            return [t for t in times if t.split("-")[0] > now_str]
+        td_prev_times = set(filter_future_times(prev_snapshot.td_available_times))
+        td_curr_times = set(filter_future_times(current_snapshot.td_available_times))
+        #Times that were available but no longer are
+        td_reserved = sorted(list(td_prev_times - td_curr_times))
+        #Times that were reserved and now are available
+        td_released = sorted(list(td_curr_times - td_prev_times))
+        td_diff = len(td_curr_times - td_prev_times)\
+        #Same thing for next day times
+        nd_prev_times = set(filter_future_times(prev_snapshot.nd_available_times))
+        nd_curr_times = set(filter_future_times(current_snapshot.nd_available_times))
+        nd_reserved = sorted(list(nd_prev_times - nd_curr_times))
+        nd_released = sorted(list(nd_curr_times - nd_prev_times))
+        nd_diff = len(nd_curr_times - nd_prev_times)
+        room_availability_change = RoomAvailabilityChange(timestamp = datetime.now(), room_id = prev_snapshot.room_id, 
+                                    prev_snapshot_id = prev_snapshot.id, current_snapshot_id = current_snapshot.id,
+                                    td_diff = td_diff, nd_diff = nd_diff, td_reserved = td_reserved, td_released = td_released,
+                                    nd_reserved = nd_reserved, nd_released = nd_released)
+        session.add(RoomAvailabilityChange)
+        session.commit()
+    finally:
+        session.close()
+
+
 
 def main():
-
     run_scraper("Shannon Library")
 main()
