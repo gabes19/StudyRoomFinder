@@ -7,7 +7,7 @@ import time
 import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, Library, Room, RoomAvailabilitySnapshot, RoomAvailabilityChange
+from models import Base, Library, Room, RoomAvailabilitySnapshot, RoomAvailabilityChange, AggregateChanges
 from dotenv import load_dotenv
 from datetime import datetime,timedelta
 
@@ -38,7 +38,16 @@ def copy_to_list(we_list, string_list):
     return string_list
 
 """
-    Helper method to scrape data availability from url and add to database. 
+    Function to collect all locations from location dropdown.
+    Will help populate dropdown in the frontend of the app 
+    as well as provide a list of locations for the scraper
+"""
+#TODO: populate locations (in library table)
+def collect_locations():
+    pass
+
+"""
+    Helper function to scrape data availability from url and add to database. 
     Parameters:
         -driver: Selenium Web Driver
         -session: Current SQLALchemy Session
@@ -180,7 +189,7 @@ def run_scraper(library_name: str):
 """
     Function to calculate differences between any two room_availability_snapshots.
     Does not add to the database
-    Used in collect_all_recent_differences
+    Used in collect_recent_availability_changes
 """
 #TODO:Ensure filter future times function is working as intended
 def calculate_snapshot_difference(prev_snapshot: RoomAvailabilitySnapshot, current_snapshot: RoomAvailabilitySnapshot, session):
@@ -204,7 +213,7 @@ def calculate_snapshot_difference(prev_snapshot: RoomAvailabilitySnapshot, curre
         td_reserved = sorted(list(td_prev_times - td_curr_times))
         #Times that were reserved and now are available
         td_released = sorted(list(td_curr_times - td_prev_times))
-        td_diff = len(td_curr_times - td_prev_times)\
+        td_diff = len(td_curr_times - td_prev_times)
         #Same thing for next day times
         nd_prev_times = set(filter_future_times(prev_snapshot.nd_available_times, current_snapshot_time))
         nd_curr_times = set(filter_future_times(current_snapshot.nd_available_times, current_snapshot_time))
@@ -220,10 +229,10 @@ def calculate_snapshot_difference(prev_snapshot: RoomAvailabilitySnapshot, curre
         print(f"Error in calculating snapshot difference - {e}")
 
 """
-    Function to calculate differences between the two most recent snapshots of all the same rooms
+    Function to calculate differences between the two most recent snapshots of each room
 """
 
-def collect_all_recent_differences():
+def collect_recent_availability_changes():
     session = SessionLocal()
     try:
         room_ids = [r[0] for r in session.query(Room.id.distinct()).all()]
@@ -245,12 +254,43 @@ def collect_all_recent_differences():
     finally:
         session.close()
 
-#TODO: Function to aggregate changes
-def aggregate_snapshot_changes():
-    pass
+"""
+    Function to aggregate most recent availability changes from Room level -> Library Level
+"""
+#TODO
+def aggregate_availability_changes(library_id: int):
+    session = SessionLocal()
+    try:
+        #Query list of room ids belonging to the library
+        room_ids = [r[0] for r in session.query(Room.id.distinct()).filter_by(library_id = library_id).all()]
+        #Query most recent availability change calculation for each room, filtering in only room_ids from the list
+        availability_changes = (session.query(RoomAvailabilityChange).filter(RoomAvailabilityChange.room_id.in_(room_ids))
+                                .order_by(RoomAvailabilityChange.timestamp.desc()).limit(1).all())
+        agg_td_diff = 0
+        agg_nd_diff = 0
+        td_num_reserved = 0
+        td_num_released = 0
+        nd_num_reserved = 0
+        nd_num_released = 0
+        for ac in availability_changes:
+            agg_td_diff += ac.td_diff
+            agg_nd_diff += ac.nd_diff
+            td_num_reserved += len(ac.td_reserved) 
+            td_num_released += len(ac.td_released)
+            nd_num_reserved += len(ac.nd_reserved) 
+            nd_num_released += len(ac.nd_released)
+        aggregate_changes = (AggregateChanges(library_id = library_id, timestamp = datetime.now(), agg_td_diff = agg_td_diff, 
+                                              agg_nd_diff = agg_nd_diff, td_num_reserved = td_num_reserved, td_num_released = td_num_released,
+                                              nd_num_reserved = nd_num_reserved, nd_num_released = nd_num_released))
+        session.add(aggregate_changes)
+        session.commit()
+    finally:
+        session.close()
+
 
 
 def main():
     run_scraper("Shannon Library")
-    collect_all_recent_differences()
+    collect_recent_availability_changes()
+    aggregate_availability_changes(1)
 main()
