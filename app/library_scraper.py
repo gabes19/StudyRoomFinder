@@ -42,7 +42,7 @@ def copy_to_list(we_list, string_list):
     Will help populate dropdown in the frontend of the app 
     as well as provide a list of locations for the scraper
 """
-#TODO: populate locations (in library table)
+#TODO: collect from page and populate locations (in library table)
 def collect_locations():
     pass
 
@@ -257,7 +257,7 @@ def collect_recent_availability_changes():
 """
     Function to aggregate most recent availability changes from Room level -> Library Level
 """
-#TODO
+
 def aggregate_availability_changes(library_id: int):
     session = SessionLocal()
     try:
