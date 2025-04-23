@@ -44,7 +44,22 @@ def copy_to_list(we_list, string_list):
 """
 #TODO: collect from page and populate locations (in library table)
 def collect_locations():
+    session = SessionLocal()
+    try:
+        #Comment out headless option for local dev
+        options = webdriver.ChromeOptions()
+        #options.add_argument('headless')
+        driver = webdriver.Chrome(options=options)
+        try:
+            driver.get("https://cal.lib.virginia.edu/r/accessible")
+            location_options = location_dropdown = Select(driver.find_element(By.ID, "s-lc-location")).options
+
+        finally:
+            driver.quit()
+    finally:
+        session.close()
     pass
+
 
 """
     Helper function to scrape data availability from url and add to database. 
@@ -121,6 +136,7 @@ def collect_availability(driver: webdriver, session, library: Library, capacity:
 """
     Function to run scraper and collect data for all libraries.
 """
+
 def run_scraper(library_name: str):
     session = SessionLocal()
     try:
