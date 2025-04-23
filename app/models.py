@@ -56,4 +56,16 @@ class RoomAvailabilityChange(Base):
     nd_reserved: Mapped[List[str]] = mapped_column(JSON,nullable=False)
     nd_released: Mapped[List[str]] = mapped_column(JSON,nullable=False)
 
-#TODO:create aggregate changes table
+class AggregateChanges(Base):
+    __tablename__ = "aggregate_changes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    library_id: Mapped[int] = mapped_column(ForeignKey("libraries.id"))
+    timestamp: Mapped[datetime] = mapped_column(nullable=False)
+    current_snapshot_ids: Mapped[List[int]] = mapped_column(JSON,ForeignKey("room_availability_changes.current_snapshot_id"),nullable=False)
+    agg_td_diff: Mapped[int] = mapped_column(nullable=False)
+    agg_nd_diff: Mapped[int] = mapped_column(nullable=False)
+    td_num_reserved: Mapped[int] = mapped_column(nullable=False)
+    td_num_released: Mapped[int] = mapped_column(nullable=False)
+    nd_num_reserved: Mapped[int] = mapped_column(nullable=False)
+    nd_num_released: Mapped[int] = mapped_column(nullable=False)
