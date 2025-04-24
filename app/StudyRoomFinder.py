@@ -32,6 +32,7 @@ def show_availability():
     libraries = db_session.query(Library).order_by(Library.library_name).all()
 
     # if “Show All”, just render with empty list
+    #TODO: Fix this
     if selected == "Show All":
         return render_template('index.html',
                                libraries=libraries,
@@ -39,23 +40,22 @@ def show_availability():
                                available_times=[])
 
     # otherwise fetch the library, its rooms, and recent snapshots
-    lib = db_session.query(Library) \
-            .filter_by(library_name=selected) \
-            .first()
+    lib = (db_session.query(Library)
+            .filter_by(library_name=selected)
+            .first())
 
-    room_ids = [r.id for r in db_session.query(Room.id)
-                         .filter_by(library_id=lib.id).all()]
-
-    cutoff = datetime.now() - timedelta(hours=1)
-    snaps = (db_session.query(RoomAvailabilitySnapshot)
-              .filter(RoomAvailabilitySnapshot.room_id.in_(room_ids),
-                      RoomAvailabilitySnapshot.captured_at >= cutoff)
+    room_ids = [r.id for r in db_session.query(Room.id).filter_by(library_id=lib.id).all()]
+    snapshots = []
+    for id in room_ids:
+        snap = (db_session.query(RoomAvailabilitySnapshot).filter_by(room_id = id)
               .order_by(RoomAvailabilitySnapshot.captured_at.desc())
-              .all())
+              .first())
+        snapshots.append(snap)
+
 
     # flatten today’s slots
     available = []
-    for s in snaps:
+    for s in snapshots:
         available += s.td_available_times
 
     return render_template('index.html',
