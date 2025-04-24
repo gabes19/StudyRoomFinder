@@ -26,9 +26,6 @@ def about():
     return render_template('about.html')
 
 #TODO: Maybe make room times clickable? (in another function)
-#TODO: Make sure you're only pulling up-to-date data for current rooms (rooms might be added, modified etc)
-#ensure that snapshots are from the same batch
-
 @app.route('/show_availability', methods=['POST'])
 def show_availability():
     selected = request.form.get('location')
