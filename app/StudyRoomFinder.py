@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import datetime, timedelta
 from config import Config 
+import humanize
 
 #App setup
 app = Flask(__name__)
@@ -42,9 +43,11 @@ def show_availability():
         snapshot = (db_session.query(RoomAvailabilitySnapshot).filter_by(room_id = room.id)
               .order_by(RoomAvailabilitySnapshot.captured_at.desc())
               .first())
-        times = snapshot.td_available_times if snapshot else []
-        if times:
-            availability_by_room.append({'room_name': room.room_name, 'times': times})
+        if snapshot:
+            captured_time_diff = humanize.naturaltime(datetime.now() - snapshot.captured_at)
+            times = snapshot.td_available_times if snapshot else []
+            if times:
+                availability_by_room.append({'room_name': room.room_name, 'times': times, "last_updated": captured_time_diff})
 
     return render_template('index.html',
                            libraries=libraries,

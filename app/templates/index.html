@@ -110,6 +110,9 @@
       
           {% for room in availability_by_room %}
             <h3 class="subtitle has-text-white is-6">{{ room.room_name }}</h3>
+            <span class="tag is-dark is-rounded is-pulled-right" style="font-size: 0.75rem;">
+              Last updated {{ room.last_updated }}
+            </span>
             <div class="tags are-medium">
               {% for time in room.times %}
                 <span class="tag is-light">{{ time }}</span>
