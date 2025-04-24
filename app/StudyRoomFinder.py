@@ -25,8 +25,7 @@ def index():
 def about():
     return render_template('about.html')
 
-#TODO: Display date and add nd_times?
-#TODO: Maybe make room times clickable?
+#TODO: Maybe make room times clickable? (in another function)
 @app.route('/show_availability', methods=['POST'])
 def show_availability():
     selected = request.form.get('location')
