@@ -26,6 +26,9 @@ def about():
     return render_template('about.html')
 
 #TODO: Maybe make room times clickable? (in another function)
+#TODO: Make sure you're only pulling up-to-date data for current rooms (rooms might be added, modified etc)
+#ensure that snapshots are from the same batch
+
 @app.route('/show_availability', methods=['POST'])
 def show_availability():
     selected = request.form.get('location')
@@ -43,7 +46,8 @@ def show_availability():
               .order_by(RoomAvailabilitySnapshot.captured_at.desc())
               .first())
         times = snapshot.td_available_times if snapshot else []
-        availability_by_room.append({'room_name': room.room_name, 'times': times})
+        if times:
+            availability_by_room.append({'room_name': room.room_name, 'times': times})
 
     return render_template('index.html',
                            libraries=libraries,
