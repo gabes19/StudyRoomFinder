@@ -26,10 +26,14 @@ def about():
     return render_template('about.html')
 
 #TODO: Rework this logc
+#TODO: Display date and add nd_times
+#TODO: Display times by room
+#TODO: Maybe make room times clickable?
 @app.route('/show_availability', methods=['POST'])
 def show_availability():
     selected = request.form.get('location')
     libraries = db_session.query(Library).order_by(Library.library_name).all()
+    timestamp = datetime.now().strftime('%A, %B %d, %Y — %I:%M %p')
 
     # if “Show All”, just render with empty list
     #TODO: Fix this
@@ -40,28 +44,21 @@ def show_availability():
                                available_times=[])
 
     # otherwise fetch the library, its rooms, and recent snapshots
-    lib = (db_session.query(Library)
-            .filter_by(library_name=selected)
-            .first())
-
-    room_ids = [r.id for r in db_session.query(Room.id).filter_by(library_id=lib.id).all()]
-    snapshots = []
-    for id in room_ids:
-        snap = (db_session.query(RoomAvailabilitySnapshot).filter_by(room_id = id)
+    lib = (db_session.query(Library).filter_by(library_name=selected).first())
+    rooms = db_session.query(Room).filter_by(library_id=lib.id).all()
+    availability_by_room = []
+    for room in rooms:
+        snapshot = (db_session.query(RoomAvailabilitySnapshot).filter_by(room_id = room.id)
               .order_by(RoomAvailabilitySnapshot.captured_at.desc())
               .first())
-        snapshots.append(snap)
-
-
-    # flatten today’s slots
-    available = []
-    for s in snapshots:
-        available += s.td_available_times
+        times = snapshot.td_available_times if snapshot else []
+        availability_by_room.append({'room_name': room.room_name, 'times': times})
 
     return render_template('index.html',
                            libraries=libraries,
                            selected_location=selected,
-                           available_times=available)
+                           availability_by_room=availability_by_room,
+                           timestamp=timestamp)
 
 
 
