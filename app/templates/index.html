@@ -104,18 +104,15 @@
           <h3 style="color: whitesmoke">Selected Location: {{ selected_location }}</h3>
         {% endif %}
         {% if available_times %}
-
-        <!-- TODO: ALL YOU NEED IS SELECTED LCOATION, REWORK THIS LOGIC SO AVAILABLE_TIMES
-         IS NOT NECESSARY CONTEXT-->
-
-        <h2 style = "color: whitesmoke;">Available Times:</h2>
-        <ul>
+        <div class="section">
+          <h2 class="subtitle has-text-white is-5">Available Times</h2>
+          <div class="tags are-medium">
             {% for time in available_times %}
-                <li>{{ time }}</li>
+              <span class="tag is-light">{{ time }}</span>
             {% endfor %}
-        
-        </ul>
-        {% endif %}
+          </div>
+        </div>
+      {% endif %}
         </div>
       </div>
     </section>
