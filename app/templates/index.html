@@ -88,7 +88,7 @@
               <div class="control">
                 <div class="select">
 <select name="location">
-  <option value="Show All" {% if selected_location == "Show All" %}selected{% endif %}>Show All</option>
+  <option value="" disabled {% if not selected_location %}selected{% endif %}>Select a Location</option>
   {% for library in libraries %}
     <option value="{{ library.library_name }}" {% if selected_location == library.library_name %}selected{% endif %}>
       {{ library.library_name }}

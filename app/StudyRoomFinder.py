@@ -25,25 +25,17 @@ def index():
 def about():
     return render_template('about.html')
 
-#TODO: Rework this logc
-#TODO: Display date and add nd_times
-#TODO: Display times by room
+#TODO: Display date and add nd_times?
 #TODO: Maybe make room times clickable?
 @app.route('/show_availability', methods=['POST'])
 def show_availability():
     selected = request.form.get('location')
+    if not selected:
+        return redirect(url_for('index'))
     libraries = db_session.query(Library).order_by(Library.library_name).all()
     timestamp = datetime.now().strftime('%A, %B %d, %Y — %I:%M %p')
 
-    # if “Show All”, just render with empty list
-    #TODO: Fix this
-    if selected == "Show All":
-        return render_template('index.html',
-                               libraries=libraries,
-                               selected_location=selected,
-                               available_times=[])
-
-    # otherwise fetch the library, its rooms, and recent snapshots
+    #fetch the library, its rooms, and recent snapshot
     lib = (db_session.query(Library).filter_by(library_name=selected).first())
     rooms = db_session.query(Room).filter_by(library_id=lib.id).all()
     availability_by_room = []
