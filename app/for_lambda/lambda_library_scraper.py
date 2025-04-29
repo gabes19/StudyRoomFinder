@@ -1,5 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.support.ui import Select
 from bs4 import BeautifulSoup
 import os
@@ -7,13 +9,12 @@ import time
 import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, Library, Room, RoomAvailabilitySnapshot, RoomAvailabilityChange, AggregateChanges
+from lambda_models import Base, Library, Room, RoomAvailabilitySnapshot, RoomAvailabilityChange, AggregateChanges
 from dotenv import load_dotenv
 from datetime import datetime,timedelta
-
-#Set up local env -> FOR AWS LAMBDA, environment variable will be configured via their console
-BASE_DIR = os.path.abspath(os.path.dirname(__file__)) #Path to app folder
-load_dotenv(os.path.join(BASE_DIR, '..', '.env'), override=True) #Load .env (one level up)
+from tempfile import mkdtemp
+import socket
+import uuid
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -25,7 +26,49 @@ Base.metadata.create_all(engine)
 one_minute_ago = datetime.now() - timedelta(minutes=1)
 
 """
-    Helper method to copy and append List[WebelElement]
+    Function to create chromedriver with lambda compatible settings.
+"""
+
+def create_driver():
+    chrome_options = ChromeOptions()
+    chrome_options.add_argument("--headless=new")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--disable-dev-tools")
+    chrome_options.add_argument("--no-zygote")
+    chrome_options.add_argument("--single-process")
+
+    # New anti security options
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--disable-web-security")
+    chrome_options.page_load_strategy = 'eager'
+    
+    # Add user agent to avoid being blocked
+    chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/90.0.4430.212 Safari/537.36")
+
+    user_data_dir = os.path.join("/tmp", str(uuid.uuid4()))
+    os.makedirs(user_data_dir, exist_ok=True)
+    chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
+    chrome_options.add_argument(f"--data-path={mkdtemp()}")
+    chrome_options.add_argument(f"--disk-cache-dir={mkdtemp()}")
+    
+    chrome_options.add_argument("--remote-debugging-pipe")
+    chrome_options.add_argument("--verbose")
+    chrome_options.add_argument("--log-path=/tmp")
+    chrome_options.binary_location = "/opt/chrome/chrome-linux64/chrome"
+
+    service = Service(
+        executable_path="/opt/chrome-driver/chromedriver-linux64/chromedriver",
+        service_log_path="/tmp/chromedriver.log"
+    )
+
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    return driver
+
+
+"""
+    Helper function to copy and append List[WebelElement]
     to List[String] to prevent stale items.
     Parameters:
         -we_list: List[WebElement] from Selenium Select().options
@@ -46,10 +89,7 @@ def copy_to_list(we_list, string_list):
 def collect_locations():
     session = SessionLocal()
     try:
-        #Comment out headless option for local dev
-        options = webdriver.ChromeOptions()
-        options.add_argument('headless')
-        driver = webdriver.Chrome(options=options)
+        driver = create_driver()
         try:
             driver.get("https://cal.lib.virginia.edu/r/accessible")
             location_options = location_dropdown = Select(driver.find_element(By.ID, "s-lc-location")).options
@@ -152,11 +192,7 @@ def collect_availability(driver: webdriver, session, library: Library, capacity:
 def run_scraper(location_list: list[str]):
     session = SessionLocal()
     try:
-        #TODO rework logic
-        #Comment out headless option for local dev
-        options = webdriver.ChromeOptions()
-        options.add_argument('headless')
-        driver = webdriver.Chrome(options=options)
+        driver = create_driver()
         try:
             for location in location_list:
                 library = session.query(Library).filter_by(library_name = location).first()
@@ -317,9 +353,20 @@ def aggregate_availability_changes(location_list: list[str]):
 
 
 
-def main():
-    locations = collect_locations()
-    run_scraper(locations)
-    collect_recent_availability_changes()
-    aggregate_availability_changes(locations)
-main()
+def lambda_handler(event, context):
+    #Test connection first
+    try:
+        url = "https://cal.lib.virginia.edu"
+        print(f"Testing connection to {url}...")
+        response = requests.get(url, timeout=10)
+        print(f"Success! Status code: {response.status_code}")
+    except Exception as e:
+        print(f"Connection failed: {e}")
+    try:
+        locations = collect_locations()
+        run_scraper(locations)  
+        collect_recent_availability_changes()
+        aggregate_availability_changes(locations)
+        print("Scraping and adding to the database was a success!")
+    except Exception as e:
+        print(f"Scraping and database interaction failed: {e}")

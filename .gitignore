@@ -2,6 +2,7 @@
 about.txt
 alembic.ini
 alembic/
+psycopg2-layer/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
