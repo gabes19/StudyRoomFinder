@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request,redirect,url_for
-from models import Library, RoomAvailabilitySnapshot, Room
-from sqlalchemy import create_engine
+from models import Library, RoomAvailabilitySnapshot, Room, RoomAvailabilityChange
+from sqlalchemy import create_engine, func, extract
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import datetime, timedelta
 from config import Config 
@@ -25,6 +25,10 @@ def index():
 @app.route('/about')
 def about():
     return render_template('about.html')
+
+@app.route('/analytics')
+def analytics():
+    return render_template('analytics.html')
 
 #TODO: Maybe make room times clickable? (in another function)
 @app.route('/show_availability', methods=['POST'])

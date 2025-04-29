@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>StudyRoomFinder Analytics</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <link rel="stylesheet" type="text/css" href="../static/style.css" />
+    <!--Ensure cards are same height -->
+    <style>
+      .analytics-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .analytics-card .card-content {
+        flex: 1;
+      }
+      .hero + .section {
+        background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+          url("../static/images/uva.jpg") no-repeat center center fixed;
+        background-size: cover;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAVBAR + SMALL HERO TITLE -->
+    <section class="hero is-info">
+      <div class="hero-head">
+        <nav class="navbar">
+          <div class="container">
+            <div class="navbar-brand">
+              <a
+                class="navbar-item"
+                href="https://gabes19.github.io/Personal-Portfolio/"
+              >
+                <span class="icon" style="color: orange">
+                  <i class="fa fa-user"></i>
+                </span>
+              </a>
+              <span class="navbar-burger burger" data-target="navbarMenu">
+                <span></span><span></span><span></span>
+              </span>
+            </div>
+            <div id="navbarMenu" class="navbar-menu">
+              <div class="navbar-end">
+                <span class="navbar-item">
+                  <a class="button is-warning is-outlined" href="/">
+                    <span class="icon"><i class="fa fa-home"></i></span>
+                    <span>Home</span>
+                  </a>
+                </span>
+                <span class="navbar-item">
+                  <a
+                    class="button is-warning is-outlined is-active"
+                    href="/analytics"
+                  >
+                    <span class="icon"><i class="fa fa-bar-chart"></i></span>
+                    <span>Analytics</span>
+                  </a>
+                </span>
+                <span class="navbar-item">
+                  <a class="button is-warning is-outlined" href="/about">
+                    <span class="icon"><i class="fa fa-clipboard"></i></span>
+                    <span>About</span>
+                  </a>
+                </span>
+                <span class="navbar-item">
+                  <a
+                    class="button is-warning is-outlined"
+                    href="https://github.com/gabes19/StudyRoomFinder"
+                  >
+                    <span class="icon"><i class="fa fa-github"></i></span>
+                    <span>View Source</span>
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </div>
+      <div class="hero-body py-2">
+        <div class="container has-text-centered">
+          <h1 class="title is-4 has-text-white">Analytics Dashboard</h1>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD CARDS GRID -->
+    <section class="section py-4">
+      <div class="container">
+        <div class="columns is-multiline">
+          <!-- 1. Room Utilization Rate -->
+          <div class="column is-6">
+            <div class="card analytics-card">
+              <header class="card-header">
+                <p class="card-header-title">Room Utilization Rate</p>
+              </header>
+              <div class="card-content">
+                <canvas id="utilizationChart" style="height: 200px"></canvas>
+              </div>
+              <footer class="card-footer">
+                <p class="card-footer-item">
+                  % of available slots reserved, per room.
+                </p>
+              </footer>
+            </div>
+          </div>
+
+          <!-- 2. Heatmap of Reservations by Hour -->
+          <div class="column is-6">
+            <div class="card analytics-card">
+              <header class="card-header">
+                <p class="card-header-title">Heatmap: Hour vs. Day</p>
+              </header>
+              <div class="card-content">
+                <!-- You can render a heatmap here (e.g. via Chart.js matrix or another lib) -->
+                <canvas id="heatmapChart" style="height: 200px"></canvas>
+              </div>
+              <footer class="card-footer">
+                <p class="card-footer-item">
+                  Peak booking times by hour and day of week.
+                </p>
+              </footer>
+            </div>
+          </div>
+
+          <!-- 3. Availability vs Demand Stacked Bar -->
+          <div class="column is-6">
+            <div class="card analytics-card">
+              <header class="card-header">
+                <p class="card-header-title">Availability vs Demand</p>
+              </header>
+              <div class="card-content">
+                <canvas id="supplyDemandChart" style="height: 200px"></canvas>
+              </div>
+              <footer class="card-footer">
+                <p class="card-footer-item">
+                  Available vs reserved slots per room.
+                </p>
+              </footer>
+            </div>
+          </div>
+
+          <!-- 4. Cumulative Reservations Over Time -->
+          <div class="column is-6">
+            <div class="card analytics-card">
+              <header class="card-header">
+                <p class="card-header-title">Cumulative Reservations</p>
+              </header>
+              <div class="card-content">
+                <canvas id="cumulativeLineChart" style="height: 200px"></canvas>
+              </div>
+              <footer class="card-footer">
+                <p class="card-footer-item">
+                  Total reservations throughout the day.
+                </p>
+              </footer>
+            </div>
+          </div>
+
+          <!-- 5. Pie Chart of Library Share -->
+          <div class="column is-6 is-offset-3">
+            <div class="card analytics-card">
+              <header class="card-header">
+                <p class="card-header-title">Library Share</p>
+              </header>
+              <div class="card-content">
+                <canvas id="libraryPieChart" style="height: 200px"></canvas>
+              </div>
+              <footer class="card-footer">
+                <p class="card-footer-item">
+                  % of reservations by library today.
+                </p>
+              </footer>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
