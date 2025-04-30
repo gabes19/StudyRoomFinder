@@ -4,6 +4,8 @@ alembic.ini
 alembic/
 psycopg2-layer/
 *.zip
+*.csr
+*.key
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
