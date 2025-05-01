@@ -11,9 +11,11 @@ from models import Base, Library, Room, RoomAvailabilitySnapshot, RoomAvailabili
 from dotenv import load_dotenv
 from datetime import datetime,timedelta
 
-#Set up local env -> FOR AWS LAMBDA, environment variable will be configured via their console
+#THIS SCRIPT IS FOR LOCAL DEV ONLY, SCRAPER BEING RUN BY LAMBDA IS IN FOR_LAMBDA FOLDER
+
+#Set up local env 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__)) #Path to app folder
-load_dotenv(os.path.join(BASE_DIR, '..', '.env'), override=True) #Load .env (one level up)
+load_dotenv(os.path.join(BASE_DIR, '.env'), override=True) #Load .env
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
