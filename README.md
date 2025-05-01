@@ -1,4 +1,4 @@
-# StudyRoomFinder
+# StudyRoomFinder - studyroomfinder.app
 
 UVA Study Room Finder is a personal project aimed at simplifying the process of finding available study rooms at the University of Virginia and analyzing the supply and demand of study spaces throughout the semester. The increased movement on grounds during finals season at the University served as an inspiration to build a tool that could measure student behavior and library usage using study room availability as a proxy. UVA Study Room Finder makes the process of finding free space less frustrating. Choose the library you want to study at and get a list of all the rooms available for reservation that day on the "Home" page, or track the statistics on the "Analytics" page.
 
