@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, func, extract
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import datetime, timedelta
 from config import Config 
+from zoneinfo import ZoneInfo
 import humanize
 
 #App setup
@@ -37,7 +38,8 @@ def show_availability():
     if not selected:
         return redirect(url_for('index'))
     libraries = db_session.query(Library).order_by(Library.library_name).all()
-    timestamp = datetime.now().strftime('%A, %B %d, %Y — %I:%M %p')
+    now_est = datetime.now(ZoneInfo("America/New_York"))
+    timestamp = now_est.strftime('%A, %B %d, %Y — %I:%M %p')
 
     #fetch the library, its rooms, and recent snapshot
     lib = (db_session.query(Library).filter_by(library_name=selected).first())
@@ -48,7 +50,8 @@ def show_availability():
               .order_by(RoomAvailabilitySnapshot.captured_at.desc())
               .first())
         if snapshot:
-            captured_time_diff = humanize.naturaltime(datetime.now() - snapshot.captured_at)
+            captured_at_est = snapshot.captured_at.astimezone(ZoneInfo("America/New_York"))
+            captured_time_diff = humanize.naturaltime(now_est - captured_at_est)
             times = snapshot.td_available_times if snapshot else []
             if times:
                 availability_by_room.append({'room_name': room.room_name, 'times': times, "last_updated": captured_time_diff})
