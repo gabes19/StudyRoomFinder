@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from config import Config 
 from zoneinfo import ZoneInfo
 import humanize
+import plotly.express as px
 
 #App setup
 app = Flask(__name__)
@@ -29,6 +30,31 @@ def about():
 
 @app.route('/analytics')
 def analytics():
+    session = db_session
+    #TODO: For the future, implement caching of most recent reservations to limit db queries
+    #% of available slots reserved for the day, per room.
+    def room_utilization_rate(session):
+        #query all room availability changes for the day
+        todays_snapshots = session.query.query()
+        #cache recent total_reserved
+        #aggregate td_reserved by total_reserved += len(td_reserved)
+        #calculate by taking total_reserved/ total num of timeslots avaiable at the beginning of the day *100
+
+        pass
+    
+    def hour_vs_day():
+        pass
+
+    def availability_vs_demand():
+        pass
+
+    def cumulative_reservations():
+        pass
+
+    def library_share():
+        pass
+
+
     return render_template('analytics.html')
 
 #TODO: Maybe make room times clickable? (in another function)
