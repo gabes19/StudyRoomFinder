@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from config import Config 
 from zoneinfo import ZoneInfo
 import humanize
-import plotly.express as px
 
 #App setup
 app = Flask(__name__)
